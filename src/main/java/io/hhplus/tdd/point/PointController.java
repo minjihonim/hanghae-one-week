@@ -1,5 +1,7 @@
 package io.hhplus.tdd.point;
 
+import io.hhplus.tdd.database.UserPointTable;
+import io.hhplus.tdd.point.service.PointService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +14,12 @@ public class PointController {
 
     private static final Logger log = LoggerFactory.getLogger(PointController.class);
 
+    private final PointService pointService;
+
+    public PointController(PointService pointService) {
+        this.pointService = pointService;
+    }
+
     /**
      * TODO - 특정 유저의 포인트를 조회하는 기능을 작성해주세요.
      */
@@ -19,7 +27,18 @@ public class PointController {
     public UserPoint point(
             @PathVariable long id
     ) {
-        return new UserPoint(0, 0, 0);
+        // id 값 파라미터 확인
+        if(id < 1) {
+            throw new RuntimeException("id 값이 1미만일 수 없습니다.");
+        }
+        // 유저가 존재하는지 확인한다.
+        try {
+            // 존재하면 유저의 포인트를 리턴
+            UserPoint result = pointService.getUserPoint(id);
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     /**
@@ -40,7 +59,12 @@ public class PointController {
             @PathVariable long id,
             @RequestBody long amount
     ) {
-        return new UserPoint(0, 0, 0);
+
+        // id 값 파라미터 확인
+        validationParam(id, amount);
+
+        UserPoint result = pointService.chargeUserPoint(id, amount);
+        return result;
     }
 
     /**
@@ -51,6 +75,19 @@ public class PointController {
             @PathVariable long id,
             @RequestBody long amount
     ) {
-        return new UserPoint(0, 0, 0);
+        validationParam(id, amount);
+        UserPoint result = pointService.useUserPoint(id, amount);
+        return result;
+    }
+
+    private void validationParam(long id, long amount) {
+        // id 값 파라미터 확인
+        if(id < 1) {
+            throw new RuntimeException("id 값이 1미만일 수 없습니다.");
+        }
+        // amount 가 0 또는 음수 일 수 없음
+        if(amount < 1) {
+            throw new RuntimeException("충전 포인트가 1미만일 수 없습니다.");
+        }
     }
 }
