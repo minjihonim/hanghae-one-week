@@ -75,8 +75,28 @@ public class PointTest {
 
     @Test
     @DisplayName("특정 유저의 포인트를 충전하는 기능")
+    public void 유저_포인트_충전_테스트_최대포인트_충전() throws Exception {
+        String amount = "1000001";
+
+        mockMvc.perform(patch("/point/{id}/charge", 1)
+                        .contentType(APPLICATION_JSON)
+                        .content(amount))
+                .andExpect(status()
+                        .is5xxServerError());   // id 값이 0 이므로 500 에러
+    }
+
+    @Test
+    @DisplayName("특정 유저의 포인트를 충전하는 기능")
     public void 유저_포인트_충전_테스트_성공() throws Exception {
-        UserPoint result = pointService.chargeUserPoint(1, 10);
+        UserPoint result = pointService.chargeUserPoint(1, 1000000);
+        assertEquals(1, result.getId());
+        assertEquals(1000000, result.getPoint());
+    }
+
+    @Test
+    @DisplayName("특정 유저의 포인트를 사용하는 기능")
+    public void 유저_포인트_사용_테스트_성공() throws Exception {
+        UserPoint result = pointService.useUserPoint(1, 10);
         assertEquals(1, result.getId());
         assertEquals(10, result.getPoint());
     }

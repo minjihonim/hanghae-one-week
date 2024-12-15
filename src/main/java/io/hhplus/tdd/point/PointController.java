@@ -80,6 +80,11 @@ public class PointController {
         return result;
     }
 
+    /**
+     * id , amount 확인 validation
+     * @param id
+     * @param amount
+     */
     private void validationParam(long id, long amount) {
         // id 값 파라미터 확인
         if(id < 1) {
