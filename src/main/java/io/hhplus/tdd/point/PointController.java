@@ -25,20 +25,14 @@ public class PointController {
      */
     @GetMapping("{id}")
     public UserPoint point(
-            @PathVariable long id
-    ) {
+            @PathVariable("id") long id
+    ) throws Exception {
         // id 값 파라미터 확인
         if(id < 1) {
             throw new RuntimeException("id 값이 1미만일 수 없습니다.");
         }
-        // 유저가 존재하는지 확인한다.
-        try {
-            // 존재하면 유저의 포인트를 리턴
-            UserPoint result = pointService.getUserPoint(id);
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
+
+        return pointService.getUserPoint(id);
     }
 
     /**
@@ -46,9 +40,14 @@ public class PointController {
      */
     @GetMapping("{id}/histories")
     public List<PointHistory> history(
-            @PathVariable long id
-    ) {
-        return List.of();
+            @PathVariable("id") long id
+    ) throws Exception  {
+        // id 값 파라미터 확인
+        if(id < 1) {
+            throw new RuntimeException("id 값이 1미만일 수 없습니다.");
+        }
+
+        return pointService.getHistory(id);
     }
 
     /**
@@ -56,15 +55,15 @@ public class PointController {
      */
     @PatchMapping("{id}/charge")
     public UserPoint charge(
-            @PathVariable long id,
+            @PathVariable("id") long id,
             @RequestBody long amount
-    ) {
+    ) throws Exception  {
 
         // id 값 파라미터 확인
         validationParam(id, amount);
 
-        UserPoint result = pointService.chargeUserPoint(id, amount);
-        return result;
+
+        return pointService.chargeUserPoint(id, amount);
     }
 
     /**
@@ -72,12 +71,11 @@ public class PointController {
      */
     @PatchMapping("{id}/use")
     public UserPoint use(
-            @PathVariable long id,
+            @PathVariable("id") long id,
             @RequestBody long amount
-    ) {
+    ) throws Exception  {
         validationParam(id, amount);
-        UserPoint result = pointService.useUserPoint(id, amount);
-        return result;
+        return pointService.useUserPoint(id, amount);
     }
 
     /**
@@ -85,7 +83,7 @@ public class PointController {
      * @param id
      * @param amount
      */
-    private void validationParam(long id, long amount) {
+    private void validationParam(long id, long amount) throws Exception {
         // id 값 파라미터 확인
         if(id < 1) {
             throw new RuntimeException("id 값이 1미만일 수 없습니다.");

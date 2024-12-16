@@ -1,6 +1,9 @@
 package io.hhplus.tdd.point.service;
 
+import io.hhplus.tdd.point.PointHistory;
 import io.hhplus.tdd.point.UserPoint;
+
+import java.util.List;
 
 public interface PointService {
 
@@ -10,14 +13,14 @@ public interface PointService {
      * @param amount
      * @return
      */
-    UserPoint chargeUserPoint(long id, long amount);
+    UserPoint chargeUserPoint(long id, long amount) throws Exception;
     
     /**
      * 유저의 포인트 정보 조회
      * @param id
      * @return
      */
-    UserPoint getUserPoint(long id);
+    UserPoint getUserPoint(long id) throws Exception;
 
     /**
      * 유저 포인트 사용
@@ -25,5 +28,12 @@ public interface PointService {
      * @param amount
      * @return
      */
-    UserPoint useUserPoint(long id, long amount);
+    UserPoint useUserPoint(long id, long amount) throws Exception ;
+
+    /**
+     * 포인트 충전/사용 내역 조회
+     * @param id
+     * @return
+     */
+    List<PointHistory> getHistory(long id) throws Exception;
 }

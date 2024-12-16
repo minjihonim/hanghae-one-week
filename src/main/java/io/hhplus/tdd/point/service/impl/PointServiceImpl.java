@@ -9,6 +9,8 @@ import io.hhplus.tdd.point.UserPoint;
 import io.hhplus.tdd.point.service.PointService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class PointServiceImpl implements PointService {
 
@@ -22,50 +24,32 @@ public class PointServiceImpl implements PointService {
     }
 
     @Override
-    public UserPoint chargeUserPoint(long id, long amount) {
-        // 응답 객체
-        UserPoint result = new UserPoint(id, amount, System.currentTimeMillis());
+    public UserPoint chargeUserPoint(long id, long amount) throws Exception {
 
         // 최대포인트 지정 ( 1백만 )
         if(amount > PointLimitType.MAX_POINT) {
             throw new RuntimeException("최대 충전포인트는 백만포인트 입니다.");
         }
 
-        // 유저 존재여부 확인
+        // 유저 정보 가져오기
         UserPoint userInfo = userPointTable.selectById(id);
-        if(userInfo == null) {
-            // 포인트 저장
-            result = userPointTable.insertOrUpdate(id, amount);
-        } else {
-            // 충전포인트 재지정
-            long chargePoint = userInfo.getPoint() + amount;
-            // 포인트 저장
-            result = userPointTable.insertOrUpdate(id, chargePoint);
-        }
+
+        // 응답 객체
+        UserPoint result = userPointTable.insertOrUpdate(userInfo.getId(), userInfo.getPoint() + amount);
+
         // 포인트 히스토리 저장
-        PointHistory pointHistory =
-                pointHistoryTable.insert(id, amount, TransactionType.CHARGE,System.currentTimeMillis());
-        if(pointHistory.getUserId() == id) {
-            return result;
-        }
+        pointHistoryTable.insert(id, amount, TransactionType.CHARGE,System.currentTimeMillis());
 
-        throw new RuntimeException("포인트 충전 실패");
+        return result;
     }
 
     @Override
-    public UserPoint getUserPoint(long id) {
-        // 유저가 존재하는지 확인한다.
-        try {
-            // 존재하면 유저의 포인트를 리턴
-            UserPoint result = userPointTable.selectById(id);
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
+    public UserPoint getUserPoint(long id) throws Exception {
+        return userPointTable.selectById(id);
     }
 
     @Override
-    public UserPoint useUserPoint(long id, long amount) {
+    public UserPoint useUserPoint(long id, long amount) throws Exception {
 
         // 유저의 포인트를 조회
         UserPoint userPoint = userPointTable.selectById(id);
@@ -85,5 +69,14 @@ public class PointServiceImpl implements PointService {
         }
 
         throw new RuntimeException("포인트 사용 실패");
+    }
+
+    @Override
+    public List<PointHistory> getHistory(long id) throws Exception {
+
+        // 유저의 포인트 사용내역 조회
+        List<PointHistory> result = pointHistoryTable.selectAllByUserId(id);
+
+        return result;
     }
 }

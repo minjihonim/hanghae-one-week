@@ -23,6 +23,8 @@ dependencyManagement {
 
 dependencies {
     implementation(libs.spring.boot.starter.web)
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    implementation("com.google.code.gson:gson:2.10")
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     annotationProcessor(libs.spring.boot.configuration.processor)
