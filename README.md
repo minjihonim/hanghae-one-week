@@ -35,3 +35,8 @@
 1. synchronized method </br>
 - Method 단위에 synchronized를 적용하게 되면 <span style="color: tomato">인스턴스 단위 Monitor Lock</span> 이 걸리게 된다.
 - 해당 방식을 사용하여 과제를 풀어 냄
+
+
+## 문서 참조 자료
+- https://sjiwon-dev.tistory.com/43  
+- chatGPT
