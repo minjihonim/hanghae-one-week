@@ -63,7 +63,7 @@ public class PointController {
         validationParam(id, amount);
 
 
-        return pointService.chargeUserPoint(id, amount);
+        return pointService.synchronizedChargeUserPoint(id, amount);
     }
 
     /**
@@ -75,7 +75,7 @@ public class PointController {
             @RequestBody long amount
     ) throws Exception  {
         validationParam(id, amount);
-        return pointService.useUserPoint(id, amount);
+        return pointService.synchronizedUseUserPoint(id, amount);
     }
 
     /**
