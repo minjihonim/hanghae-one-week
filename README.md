@@ -9,4 +9,4 @@
 ## 자바에서 제공해주는 synchronized
 - 자바에서 제공해주는 __synchronized 키워드__ 는 이러한 Monitor 기반의 동기화 메커니즘을 제공한다.
 1. synchronized method </br>
-Method 단위에 synchronized를 적용하게 되면 인스턴스 단위 Monitor Lock 이 걸리게 된다.
+Method 단위에 synchronized를 적용하게 되면 <span style="color: tomato">인스턴스 단위 Monitor Lock</span> 이 걸리게 된다.
