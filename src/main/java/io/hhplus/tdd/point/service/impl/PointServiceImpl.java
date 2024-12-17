@@ -26,11 +26,11 @@ public class PointServiceImpl implements PointService {
     @Override
     public UserPoint chargeUserPoint(long id, long amount) throws Exception {
 
-        // 최대포인트 지정 ( 1백만 )
+        // 최대포인트 지정 ( 오십만 )
         if(amount > PointLimitType.MAX_POINT) {
-            throw new RuntimeException("최대 충전포인트는 백만포인트 입니다.");
+            throw new RuntimeException("최대 충전포인트는 오십만 포인트입니다.");
         }
-
+        
         // 유저 정보 가져오기
         UserPoint userInfo = userPointTable.selectById(id);
 
@@ -44,7 +44,7 @@ public class PointServiceImpl implements PointService {
     }
 
     @Override
-    public synchronized UserPoint synchronizedChargeUserPoint(long id, long amount) throws Exception {
+    public synchronized UserPoint synchronizedChargeUserPoint(long id, long amount, long currentTime) throws Exception {
         // 최대포인트 지정 ( 1백만 )
         if(amount > PointLimitType.MAX_POINT) {
             throw new RuntimeException("최대 충전포인트는 백만포인트 입니다.");
@@ -53,11 +53,16 @@ public class PointServiceImpl implements PointService {
         // 유저 정보 가져오기
         UserPoint userInfo = userPointTable.selectById(id);
 
+        // 포인트 충전 시 유저 보유 포인트가 100만이 초과될 수 없음
+        if(userInfo.getPoint() + amount > PointLimitType.MAX_LIMIT_POINT) {
+            throw new RuntimeException("최대 보유 포인트는 100만 까지 입니다.");
+        }
+
         // 응답 객체
         UserPoint result = userPointTable.insertOrUpdate(userInfo.getId(), userInfo.getPoint() + amount);
 
         // 포인트 히스토리 저장
-        pointHistoryTable.insert(id, amount, TransactionType.CHARGE,System.currentTimeMillis());
+        pointHistoryTable.insert(id, amount, TransactionType.CHARGE, currentTime);
 
         return result;
     }
@@ -91,7 +96,7 @@ public class PointServiceImpl implements PointService {
     }
 
     @Override
-    public synchronized UserPoint synchronizedUseUserPoint(long id, long amount) throws Exception {
+    public synchronized UserPoint synchronizedUseUserPoint(long id, long amount, long currentTime) throws Exception {
         // 유저의 포인트를 조회
         UserPoint userPoint = userPointTable.selectById(id);
         // 보유 포인트 보다 사용 포인트가 큼으로 실패처리
@@ -103,7 +108,7 @@ public class PointServiceImpl implements PointService {
         UserPoint result = userPointTable.insertOrUpdate(id, beforePoint);
         // 포인트 히스토리 저장
         PointHistory pointHistory =
-                pointHistoryTable.insert(id, amount, TransactionType.USE ,System.currentTimeMillis());
+                pointHistoryTable.insert(id, amount, TransactionType.USE, currentTime);
 
         if(pointHistory.getUserId() == id) {
             return result;

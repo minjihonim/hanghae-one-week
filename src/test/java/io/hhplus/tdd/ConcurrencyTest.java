@@ -39,7 +39,7 @@ public class ConcurrencyTest {
                     try {
                         String threadName = Thread.currentThread().getName();
                         System.out.println("작업 스레드 이름: " + threadName);
-                        pointService.synchronizedChargeUserPoint(id, amount);   // 포인트 충전 기능
+                        pointService.synchronizedChargeUserPoint(id, amount, System.currentTimeMillis());   // 포인트 충전 기능
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -81,7 +81,7 @@ public class ConcurrencyTest {
                     try {
                         String threadName = Thread.currentThread().getName();
                         System.out.println("작업 스레드 이름: " + threadName);
-                        pointService.synchronizedChargeUserPoint(id, amount);   // 포인트 충전 기능
+                        pointService.synchronizedChargeUserPoint(id, amount, System.currentTimeMillis());   // 포인트 충전 기능
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -158,6 +158,7 @@ public class ConcurrencyTest {
         long id = 1;    // userId
         long amount = 10;   // 사용 포인트
         long chargePoint = 100;     // 충전 포인트
+        long currentTime = System.currentTimeMillis();
         // 포인트 사용을 위한 포인트 충전
         pointService.chargeUserPoint(id, chargePoint);
 
@@ -171,7 +172,7 @@ public class ConcurrencyTest {
                     try {
                         String threadName = Thread.currentThread().getName();
                         System.out.println("작업 스레드 이름: " + threadName);
-                        pointService.synchronizedUseUserPoint(id, amount);   // 포인트 사용 기능
+                        pointService.synchronizedUseUserPoint(id, amount, currentTime);   // 포인트 사용 기능
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
