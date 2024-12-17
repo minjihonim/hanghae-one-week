@@ -7,25 +7,27 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+/**
+ * 동시성 제어 통합 테스트
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 public class ConcurrencyTest {
-    @Autowired
-    private MockMvc mockMvc;
+
     @Autowired
     private PointService pointService;
 
     @Test
     @DisplayName("포인트 충전 동시성 테스트")
-    public void 포인트_충전_동시성_제어_테스트_통과() throws Exception {
+    public void 동일_사용자_포인트_충전_동시성_제어_테스트_통과() throws Exception {
         long id = 1;    // userId
         long amount = 10;   // 충전 포인트
 
@@ -67,7 +69,7 @@ public class ConcurrencyTest {
 
     @Test
     @DisplayName("포인트 충전 동시성 테스트")
-    public void 포인트_충전_동시성_버그_발생_테스트() throws Exception {
+    public void 동일_사용자_포인트_충전_동시성_테스트_Race_Condition_발생() throws Exception {
         long id = 1;    // userId
         long amount = 10;   // 충전 포인트
 
@@ -81,7 +83,7 @@ public class ConcurrencyTest {
                     try {
                         String threadName = Thread.currentThread().getName();
                         System.out.println("작업 스레드 이름: " + threadName);
-                        pointService.synchronizedChargeUserPoint(id, amount, System.currentTimeMillis());   // 포인트 충전 기능
+                        pointService.chargeUserPoint(id, amount);   // 포인트 충전 기능
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -103,13 +105,13 @@ public class ConcurrencyTest {
         long actualPoint = userInfo.getPoint();
 
         // Race Condition 이 없는 경우만 성공
-        assertEquals(expectedPoint, actualPoint);
+        assertNotEquals(expectedPoint, actualPoint);
 
     }
 
     @Test
     @DisplayName("포인트 사용 동시성 테스트")
-    public void 포인트_사용_동시성_버그_발생_테스트() throws Exception {
+    public void 동일_사용자_포인트_사용_동시성_테스트_Race_Condition_발생() throws Exception {
         long id = 1;    // userId
         long amount = 10;   // 사용 포인트
         long chargePoint = 100;     // 충전 포인트
@@ -147,14 +149,15 @@ public class ConcurrencyTest {
         UserPoint userInfo = pointService.getUserPoint(id);
         long actualPoint = userInfo.getPoint();
 
+        boolean result;
         // Race Condition 이 없는 경우만 성공
-        assertEquals(expectedPoint, actualPoint);
+        assertNotEquals(expectedPoint, actualPoint);
 
     }
 
     @Test
     @DisplayName("포인트 사용 동시성 테스트")
-    public void 포인트_사용_동시성_제어_테스트_통과() throws Exception {
+    public void 동일_사용자_포인트_사용_동시성_제어_테스트_통과() throws Exception {
         long id = 1;    // userId
         long amount = 10;   // 사용 포인트
         long chargePoint = 100;     // 충전 포인트
