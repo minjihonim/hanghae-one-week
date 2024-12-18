@@ -7,9 +7,12 @@ import io.hhplus.tdd.point.PointLimitType;
 import io.hhplus.tdd.point.TransactionType;
 import io.hhplus.tdd.point.UserPoint;
 import io.hhplus.tdd.point.service.PointService;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Service
 public class PointServiceImpl implements PointService {
@@ -23,31 +26,18 @@ public class PointServiceImpl implements PointService {
         this.pointHistoryTable = pointHistoryTable;
     }
 
-    @Override
-    public UserPoint chargeUserPoint(long id, long amount) throws Exception {
+    // 동시성 제어 포인트 충전 Queue
+    private final Queue<UserPoint> chargePointQueue = new ConcurrentLinkedQueue<>();
+    // 동시성 제어 포인트 소비(사용) Queue
+    private final Queue<UserPoint> usePointQueue = new ConcurrentLinkedQueue<>();
+    
+    // 큐에 데이터
 
+    @Override
+    public UserPoint chargeUserPoint(long id, long amount, long currentTime) throws Exception {
         // 최대포인트 지정 ( 오십만 )
         if(amount > PointLimitType.MAX_POINT) {
             throw new RuntimeException("최대 충전포인트는 오십만 포인트입니다.");
-        }
-        
-        // 유저 정보 가져오기
-        UserPoint userInfo = userPointTable.selectById(id);
-
-        // 응답 객체
-        UserPoint result = userPointTable.insertOrUpdate(userInfo.getId(), userInfo.getPoint() + amount);
-
-        // 포인트 히스토리 저장
-        pointHistoryTable.insert(id, amount, TransactionType.CHARGE,System.currentTimeMillis());
-
-        return result;
-    }
-
-    @Override
-    public synchronized UserPoint synchronizedChargeUserPoint(long id, long amount, long currentTime) throws Exception {
-        // 최대포인트 지정 ( 1백만 )
-        if(amount > PointLimitType.MAX_POINT) {
-            throw new RuntimeException("최대 충전포인트는 백만포인트 입니다.");
         }
 
         // 유저 정보 가져오기
@@ -58,13 +48,34 @@ public class PointServiceImpl implements PointService {
             throw new RuntimeException("최대 보유 포인트는 100만 까지 입니다.");
         }
 
-        // 응답 객체
-        UserPoint result = userPointTable.insertOrUpdate(userInfo.getId(), userInfo.getPoint() + amount);
+        // 동시성 제어를 위해 Queue 를 사용, 포인트 충전 전용 Queue
+        if(chargePointQueue.add(new UserPoint(id, amount, currentTime))) {
+            return new UserPoint(id, userInfo.point() + amount, currentTime);
+        }
 
-        // 포인트 히스토리 저장
-        pointHistoryTable.insert(id, amount, TransactionType.CHARGE, currentTime);
+        throw new RuntimeException("충전에 실패 하였습니다.");
+    }
 
-        return result;
+    // 매 1초마다 큐를 처리
+    @Scheduled(fixedRate = 500)
+    public void processChargeQueueAutomatically() {
+        processChargeQueue();
+    }
+
+    private void processChargeQueue() {
+        while(!chargePointQueue.isEmpty()) {
+            // 충전 포인트 request info
+            UserPoint chargePointInfo = chargePointQueue.poll();
+
+            // 유저 정보 가져오기
+            UserPoint userInfo = userPointTable.selectById(chargePointInfo.id());
+
+            // 포인트 저장
+            userPointTable.insertOrUpdate(userInfo.id(), userInfo.point() + chargePointInfo.point());
+
+            // 포인트 히스토리 저장
+            pointHistoryTable.insert(userInfo.id(), chargePointInfo.point(), TransactionType.CHARGE, chargePointInfo.updateMillis());
+        }
     }
 
     @Override
@@ -73,7 +84,7 @@ public class PointServiceImpl implements PointService {
     }
 
     @Override
-    public UserPoint useUserPoint(long id, long amount) throws Exception {
+    public UserPoint useUserPoint(long id, long amount, long currentTime) throws Exception {
 
         // 유저의 포인트를 조회
         UserPoint userPoint = userPointTable.selectById(id);
@@ -81,40 +92,35 @@ public class PointServiceImpl implements PointService {
         if(userPoint.getPoint() < amount) {
             throw new RuntimeException("보유 포인트가 부족합니다.");
         }
-        // 포인트 사용처리
-        long beforePoint = userPoint.getPoint() - amount;
-        UserPoint result = userPointTable.insertOrUpdate(id, beforePoint);
-        // 포인트 히스토리 저장
-        PointHistory pointHistory =
-                pointHistoryTable.insert(id, amount, TransactionType.USE ,System.currentTimeMillis());
 
-        if(pointHistory.getUserId() == id) {
-            return result;
+        // 동시성 제어를 위해 Queue 를 사용, 포인트 충전 전용 Queue
+        if(usePointQueue.add(new UserPoint(id, amount, currentTime))) {
+            return new UserPoint(id, userPoint.point() - amount, currentTime);
         }
 
-        throw new RuntimeException("포인트 사용 실패");
+        throw new RuntimeException("포인트 사용에 실패 하였습니다.");
     }
 
-    @Override
-    public synchronized UserPoint synchronizedUseUserPoint(long id, long amount, long currentTime) throws Exception {
-        // 유저의 포인트를 조회
-        UserPoint userPoint = userPointTable.selectById(id);
-        // 보유 포인트 보다 사용 포인트가 큼으로 실패처리
-        if(userPoint.getPoint() < amount) {
-            throw new RuntimeException("보유 포인트가 부족합니다.");
-        }
-        // 포인트 사용처리
-        long beforePoint = userPoint.getPoint() - amount;
-        UserPoint result = userPointTable.insertOrUpdate(id, beforePoint);
-        // 포인트 히스토리 저장
-        PointHistory pointHistory =
-                pointHistoryTable.insert(id, amount, TransactionType.USE, currentTime);
+    // 매 1초마다 큐를 처리
+    @Scheduled(fixedRate = 500)
+    public void processUseQueueAutomatically() {
+        processUseQueue();
+    }
 
-        if(pointHistory.getUserId() == id) {
-            return result;
-        }
+    private void processUseQueue() {
+        while(!usePointQueue.isEmpty()) {
+            // 사용 포인트 request info
+            UserPoint usePointInfo = usePointQueue.poll();
 
-        throw new RuntimeException("포인트 사용 실패");
+            // 유저 정보 가져오기
+            UserPoint userInfo = userPointTable.selectById(usePointInfo.id());
+
+            // 포인트 사용처리
+            long beforePoint = userInfo.getPoint() - usePointInfo.point();
+            userPointTable.insertOrUpdate(usePointInfo.id(), beforePoint);
+            // 포인트 히스토리 저장
+            pointHistoryTable.insert(usePointInfo.id(), usePointInfo.point(), TransactionType.USE , usePointInfo.updateMillis());
+        }
     }
 
     @Override

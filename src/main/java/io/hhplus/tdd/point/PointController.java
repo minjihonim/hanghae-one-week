@@ -62,7 +62,7 @@ public class PointController {
         // id 값 파라미터 확인
         validationParam(id, amount);
 
-        return pointService.synchronizedChargeUserPoint(id, amount, System.currentTimeMillis());
+        return pointService.chargeUserPoint(id, amount, System.currentTimeMillis());
     }
 
     /**
@@ -75,7 +75,7 @@ public class PointController {
     ) throws Exception  {
         long currentTime = System.currentTimeMillis();
         validationParam(id, amount);
-        return pointService.synchronizedUseUserPoint(id, amount, currentTime);
+        return pointService.useUserPoint(id, amount, currentTime);
     }
 
     /**

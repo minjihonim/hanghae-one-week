@@ -42,12 +42,12 @@ public class PointTest {
         long currentTime = System.currentTimeMillis();
 
         // when & then
-        assertThrows(RuntimeException.class, () ->  pointService.synchronizedChargeUserPoint(id, amount, currentTime));
+        assertThrows(RuntimeException.class, () ->  pointService.chargeUserPoint(id, amount, currentTime));
     }
 
     @Test
     @DisplayName("특정 유저의 포인트를 충전하는 기능")
-    public void 유저_포인트_충전_최대_잔고_테스트_실패() throws Exception {
+    public void 유저_포인트_충전_최대_잔고_테스트() throws Exception {
         // 최대 잔고가 100만이 넘게될 경우 실패
         //given
         long id = 1L;
@@ -57,7 +57,7 @@ public class PointTest {
         when(userPointTable.selectById(id)).thenReturn(new UserPoint(id, 600_000L, currentTime));
 
         // when & then
-        assertThrows(RuntimeException.class, () ->  pointService.synchronizedChargeUserPoint(id, amount, currentTime));
+        assertThrows(RuntimeException.class, () ->  pointService.chargeUserPoint(id, amount, currentTime));
     }
 
     @Test
@@ -77,7 +77,8 @@ public class PointTest {
                 .thenReturn(new PointHistory(1, id, amount, TransactionType.CHARGE, currentTime));
 
         // when
-        UserPoint result = pointService.synchronizedChargeUserPoint(id, amount, currentTime);
+        UserPoint result = pointService.chargeUserPoint(id, amount, currentTime);
+        pointService.processChargeQueueAutomatically();
 
         // then
         assertEquals(id, result.getId());
@@ -98,7 +99,7 @@ public class PointTest {
 
         // when & then
         assertThrows(RuntimeException.class, () -> {
-            pointService.synchronizedUseUserPoint(id, amount, currentTime);
+            pointService.useUserPoint(id, amount, currentTime);
         });
     }
 
@@ -119,7 +120,8 @@ public class PointTest {
         when(pointHistoryTable.insert(id, amount, TransactionType.USE, currentTime))
                 .thenReturn(new PointHistory(1, id, amount, TransactionType.USE, currentTime));
         // when
-        UserPoint result = pointService.synchronizedUseUserPoint(id, amount, currentTime);
+        UserPoint result = pointService.useUserPoint(id, amount, currentTime);
+        pointService.processUseQueueAutomatically();
 
         // then
         assertEquals(id, result.getId());
