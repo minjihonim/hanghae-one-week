@@ -20,7 +20,7 @@
 
 ❗ 여기서 `동시성` 과 `병렬성`도 비교해보면 좋을 것이다.
 
-!https://velog.velcdn.com/images/mooh2jj/post/ea921599-62ae-4553-b3ac-aa0f9f92c508/image.png
+![t-image](https://velog.velcdn.com/images/mooh2jj/post/ea921599-62ae-4553-b3ac-aa0f9f92c508/image.png)
 
 ### 멀티 쓰레드를 사용하는 이유 ?
 
