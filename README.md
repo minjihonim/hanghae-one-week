@@ -141,10 +141,24 @@ Thread 가 Critical Section에 접근할때 (또는 processer로 부터 resource
   - 스케쥴 형태로 작동되도록 구현하였기 때문에 나의 Queue 구현체에서는 LinkedBlockingQueue 와 ConcurrentLinkedQueue 의 선택에 대해 크게 고려할 필요는 없다고 보여집니다.
  
 ## Step 3. 동시성 제어 통합 테스트 개발을 하기 위해 학습한 내용
-# TODO : 개발하면서 사용된 라이브러리 작성 ( 멀티쓰레드 구현 등등 )
+- 멀티 쓰레드 테스트를 위한 ExecutorService 
+
+## Step 4. 동시성 제어 개발 과정 정리
+- 처음 동시성 제어 부분에 대한 개발은 단순 synchronized 매서드를 적용함
+  - 하지만 대량의 작업 요청에 대해 지연시간이 길어지므로 서비스 제공 관점으로 봤을 때 효율성이 떨어짐
+- 멘토링을 통해 큐를 적용해야 함을 알고 ConcurrentLinkedQueue 을 적용 함.
+  - 큐를 작업할 매서드에 스케쥴링(@Scheduled) 어노테이션을 적용하여 1초마다 수행되도록 구현
+  - 1초마다 큐를 처리하는 매서드가 수행되기 때문에 **논리적인 작업 상태(예: 작업 중인지 여부)** 를 확인하는 플래그의 필요성이 있어 보임
+   - ConcurrentLinkedQueue는 작업 상태 추적이나 작업 락을 제공하지 않음.
+- 다양한 케이스를 설정하여 통합테스트 진행
+ 
+### 생각해보기
+- 그럼 Queue 에 데이터가 쌓인 상태에서 서버의 오류가 발생하여 해당 Queue 의 작업이 이루어지지 않았을 경우 및 Queue 의 데어터가 초기화됐을 때는 어떻게 할 것인가 ?
+  - 인 메모리 DB Redis 를 사용하도록 생각해보기
 
 ## 문서 참조 자료
 - https://sjiwon-dev.tistory.com/43
 - [https://velog.io/@mooh2jj/멀티-스레드의-동시성-이슈](https://velog.io/@mooh2jj/%EB%A9%80%ED%8B%B0-%EC%8A%A4%EB%A0%88%EB%93%9C%EC%9D%98-%EB%8F%99%EC%8B%9C%EC%84%B1-%EC%9D%B4%EC%8A%88)
 - https://jjaesang.github.io/java/2019/07/22/java-blockingqueue-vs-concurrentLinkedQueue.html
 - https://chatgpt.com/
+- https://simyeju.tistory.com/119
