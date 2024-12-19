@@ -62,8 +62,7 @@ public class PointController {
         // id 값 파라미터 확인
         validationParam(id, amount);
 
-
-        return pointService.chargeUserPoint(id, amount);
+        return pointService.chargeUserPoint(id, amount, System.currentTimeMillis());
     }
 
     /**
@@ -74,8 +73,9 @@ public class PointController {
             @PathVariable("id") long id,
             @RequestBody long amount
     ) throws Exception  {
+        long currentTime = System.currentTimeMillis();
         validationParam(id, amount);
-        return pointService.useUserPoint(id, amount);
+        return pointService.useUserPoint(id, amount, currentTime);
     }
 
     /**
