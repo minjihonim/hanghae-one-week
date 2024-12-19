@@ -28,8 +28,13 @@ public class PointServiceImpl implements PointService {
 
     // 동시성 제어 포인트 충전 Queue
     private final Queue<UserPoint> chargePointQueue = new ConcurrentLinkedQueue<>();
+    // 포인트 충전 Queue 작업 상태 boolean
+    boolean chargePointQueueStatus = false;
+
     // 동시성 제어 포인트 소비(사용) Queue
     private final Queue<UserPoint> usePointQueue = new ConcurrentLinkedQueue<>();
+    // 포인트 소비(사용) Queue 작업 상태 boolean
+    boolean usePointQueueStatus = false;
     
     // 큐에 데이터
 
@@ -57,12 +62,17 @@ public class PointServiceImpl implements PointService {
     }
 
     // 매 1초마다 큐를 처리
-    @Scheduled(fixedRate = 500)
-    public void processChargeQueueAutomatically() {
+    @Scheduled(fixedRate = 1000)
+    public void processChargeQueueAutomatically() throws InterruptedException {
+        if(chargePointQueueStatus) {
+            return;
+        }
         processChargeQueue();
     }
 
-    private void processChargeQueue() {
+    private void processChargeQueue() throws InterruptedException {
+        // 작업 중 상태로 변환
+        chargePointQueueStatus = true;
         while(!chargePointQueue.isEmpty()) {
             // 충전 포인트 request info
             UserPoint chargePointInfo = chargePointQueue.poll();
@@ -76,6 +86,8 @@ public class PointServiceImpl implements PointService {
             // 포인트 히스토리 저장
             pointHistoryTable.insert(userInfo.id(), chargePointInfo.point(), TransactionType.CHARGE, chargePointInfo.updateMillis());
         }
+        // 작업종료 상태로 변환
+        chargePointQueueStatus = false;
     }
 
     @Override
@@ -102,12 +114,17 @@ public class PointServiceImpl implements PointService {
     }
 
     // 매 1초마다 큐를 처리
-    @Scheduled(fixedRate = 500)
-    public void processUseQueueAutomatically() {
+    @Scheduled(fixedRate = 1000)
+    public void processUseQueueAutomatically() throws InterruptedException {
+        if(usePointQueueStatus) {
+            return;
+        }
         processUseQueue();
     }
 
-    private void processUseQueue() {
+    private void processUseQueue() throws InterruptedException {
+        // 작업 중 상태로 변환
+        usePointQueueStatus = true;
         while(!usePointQueue.isEmpty()) {
             // 사용 포인트 request info
             UserPoint usePointInfo = usePointQueue.poll();
@@ -121,14 +138,14 @@ public class PointServiceImpl implements PointService {
             // 포인트 히스토리 저장
             pointHistoryTable.insert(usePointInfo.id(), usePointInfo.point(), TransactionType.USE , usePointInfo.updateMillis());
         }
+        // 작업종료 상태로 변환
+        usePointQueueStatus = false;
     }
 
     @Override
     public List<PointHistory> getHistory(long id) throws Exception {
 
         // 유저의 포인트 사용내역 조회
-        List<PointHistory> result = pointHistoryTable.selectAllByUserId(id);
-
-        return result;
+        return pointHistoryTable.selectAllByUserId(id);
     }
 }

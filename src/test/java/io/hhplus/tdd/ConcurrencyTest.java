@@ -44,14 +44,23 @@ public class ConcurrencyTest {
             });
         }
 
+        for (int i=0; i<threadCount; i++) {
+            executorService.submit(() -> {
+                // 충전 로직 큐 수행
+                try {
+                    pointService.processChargeQueueAutomatically();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
         // 모든 작업 완료 대기
         executorService.shutdown();
-        boolean completed = executorService.awaitTermination(5, TimeUnit.SECONDS);
+        boolean completed = executorService.awaitTermination(20, TimeUnit.SECONDS);
         if (!completed) {
             throw new RuntimeException("Test timed out");
         }
-
-        pointService.processChargeQueueAutomatically();
 
         // 기대값은 threadCount * iterations, 하지만 Race Condition 때문에 달라질 가능성 있음
         long expectedPoint = amount * iterations * threadCount;
@@ -92,14 +101,24 @@ public class ConcurrencyTest {
             });
         }
 
+        for (int i=0; i<threadCount; i++) {
+            executorService.submit(() -> {
+                // 소비 로직 큐 수행
+                try {
+                    pointService.processUseQueueAutomatically();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
         // 모든 작업 완료 대기
         executorService.shutdown();
-        boolean completed = executorService.awaitTermination(5, TimeUnit.SECONDS);
+        boolean completed = executorService.awaitTermination(20, TimeUnit.SECONDS);
         if (!completed) {
             throw new RuntimeException("Test timed out");
         }
 
-        pointService.processUseQueueAutomatically();
 
         // 기대값은 threadCount * iterations, 하지만 Race Condition 때문에 달라질 가능성 있음
         long expectedPoint = chargePoint - (amount * iterations * threadCount); // 100 - 90
