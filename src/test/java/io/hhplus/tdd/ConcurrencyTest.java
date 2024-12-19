@@ -136,15 +136,6 @@ public class ConcurrencyTest {
                 }
             });
         }
-        // 포인트 충전 큐 poll
-        executorService.submit(() -> {
-            // 충전 로직 큐 수행
-            try {
-                pointService.processChargeQueueAutomatically();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
 
         // 모든 작업 완료 대기
         executorService.shutdown();
@@ -152,6 +143,9 @@ public class ConcurrencyTest {
         if (!completed) {
             throw new RuntimeException("Test timed out");
         }
+
+        // 포인트 충전 큐 poll
+        pointService.processChargeQueueAutomatically();
 
         // 기대값은 threadCount * iterations, 하지만 Race Condition 때문에 달라질 가능성 있음
         for(int i=0; i<threadCount; i++) {
