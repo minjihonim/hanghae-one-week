@@ -32,6 +32,7 @@ public class ConcurrencyTest {
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);    // 멀티쓰레드 생성
 
+        // 포인트 충전 큐 add
         for (int i=0; i<threadCount; i++) {
             executorService.submit(() -> {
                 for (int j = 0; j < iterations; j++){
@@ -43,7 +44,7 @@ public class ConcurrencyTest {
                 }
             });
         }
-
+        // 포인트 충전 큐 poll()
         for (int i=0; i<threadCount; i++) {
             executorService.submit(() -> {
                 // 충전 로직 큐 수행
@@ -89,6 +90,7 @@ public class ConcurrencyTest {
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 
+        // 포인트 충전 큐 add
         for (int i=0; i<threadCount; i++) {
             executorService.submit(() -> {
                 for (int j = 0; j < iterations; j++){
@@ -101,6 +103,7 @@ public class ConcurrencyTest {
             });
         }
 
+        // 포인트 충전 큐 poll()
         for (int i=0; i<threadCount; i++) {
             executorService.submit(() -> {
                 // 소비 로직 큐 수행
