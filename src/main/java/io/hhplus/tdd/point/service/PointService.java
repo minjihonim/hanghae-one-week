@@ -36,4 +36,12 @@ public interface PointService {
      * @return
      */
     List<PointHistory> getHistory(long id) throws Exception;
+
+    /**
+     * 동시성 제어 - 포인트 충전 시 동시성 이슈 발생 테스트 메서드
+     * @param id
+     * @param amount
+     * @param currentTime
+     */
+    void failChargeUserPoint(long id, long amount, long currentTime);
 }

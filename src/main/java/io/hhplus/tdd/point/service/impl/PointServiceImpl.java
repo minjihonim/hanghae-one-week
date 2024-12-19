@@ -148,4 +148,28 @@ public class PointServiceImpl implements PointService {
         // 유저의 포인트 사용내역 조회
         return pointHistoryTable.selectAllByUserId(id);
     }
+
+    @Override
+    public void failChargeUserPoint(long id, long amount, long currentTime) {
+        // 최대포인트 지정 ( 오십만 )
+        if(amount > PointLimitType.MAX_POINT) {
+            throw new RuntimeException("최대 충전포인트는 오십만 포인트입니다.");
+        }
+
+        // 유저 정보 가져오기
+        UserPoint userInfo = userPointTable.selectById(id);
+
+        // 포인트 충전 시 유저 보유 포인트가 100만이 초과될 수 없음
+        if(userInfo.getPoint() + amount > PointLimitType.MAX_LIMIT_POINT) {
+            throw new RuntimeException("최대 보유 포인트는 100만 까지 입니다.");
+        }
+
+        // 포인트 저장
+        userPointTable.insertOrUpdate(userInfo.id(), userInfo.point() + amount);
+
+        // 포인트 히스토리 저장
+        pointHistoryTable.insert(userInfo.id(), amount, TransactionType.CHARGE, currentTime);
+
+        throw new RuntimeException("충전에 실패 하였습니다.");
+    }
 }
